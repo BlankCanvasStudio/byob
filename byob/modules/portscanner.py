@@ -7,6 +7,7 @@ import os
 import sys
 import json
 import socket
+import threading
 if sys.version_info[0] > 2:
     from queue import Queue
 else:
@@ -676,14 +677,13 @@ def _threader():
         except:
             break
 
-
-def _scan(target):
+import threading
+def _scan(host, port):
     global ports
     global results
 
     try:
         data = None
-        host, port = target
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1.0)
         sock.connect((str(host), int(port)))
@@ -729,13 +729,27 @@ def run(target='192.168.1.1', ports=[21,22,23,25,80,110,111,135,139,443,445,554,
         raise ValueError("target is not a valid IPv4 address")
     # if _ping(target):
 
+    results[target] = {}
+    threads = []
+
     for port in ports:
-        tasks.put_nowait((_scan, (target, port)))
-    for i in range(1, tasks.qsize()):
-        threads['portscan-%d' % i] = _threader()
+        t = threading.Thread(target=_scan, args=(target, port)
+        t.start()
+        threads.append(t)
+
     for t in threads:
-        threads[t].join()
+        t.join()
+
     return json.dumps(results[target])
+
+    # results[target] = {}
+    # for port in ports:
+    #     tasks.put_nowait((_scan, (target, port)))
+    # for i in range(1, tasks.qsize()):
+    #     threads['portscan-%d' % i] = _threader()
+    # for t in threads:
+    #     threads[t].join()
+    # return json.dumps(results[target])
 
     # else:
     #     return "Target offline"
