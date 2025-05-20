@@ -727,14 +727,16 @@ def run(target='192.168.1.1', ports=[21,22,23,25,80,110,111,135,139,443,445,554,
     global results
     if not ipv4(target):
         raise ValueError("target is not a valid IPv4 address")
-    if _ping(target):
-        for port in ports:
-            tasks.put_nowait((_scan, (target, port)))
-        for i in range(1, tasks.qsize()):
-            threads['portscan-%d' % i] = _threader()
-        for t in threads:
-            threads[t].join()
-        return json.dumps(results[target])
-    else:
-        return "Target offline"
+    # if _ping(target):
+
+    for port in ports:
+        tasks.put_nowait((_scan, (target, port)))
+    for i in range(1, tasks.qsize()):
+        threads['portscan-%d' % i] = _threader()
+    for t in threads:
+        threads[t].join()
+    return json.dumps(results[target])
+
+    # else:
+    #     return "Target offline"
 
